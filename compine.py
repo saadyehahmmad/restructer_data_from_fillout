@@ -279,10 +279,10 @@ def process_excel(file_path):
         ws.sheet_view.rightToLeft = True
 
         # Save the workbook to a BytesIO object instead of a file
-        output = BytesIO()
-        wb.save(output)
-        output.seek(0)
-        return output
+        output_file_path = "processed_output.xlsx"
+        wb.save(output_file_path)
+        return output_file_path
+
 
     except Exception as e:
         return f"An error occurred: {e}"
@@ -296,16 +296,21 @@ def app2():
         if file.filename == '':
             return 'No selected file'
         if file and allowed_file(file.filename):
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+            file_path = os.path.join(app.config['UPLOAD_FOLDER_2'], secure_filename(file.filename))
             file.save(file_path)
             try:
-                processed_file = process_excel(file_path)
-                return send_file(processed_file, as_attachment=True, download_name='processed_file.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                processed_file_path = process_excel(file_path)
+                return send_file(
+                    open(processed_file_path, 'rb'),
+                    as_attachment=True,
+                    download_name='tasks_processed.xlsx',
+                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
             except Exception as e:
                 return f"An error occurred: {e}"
         else:
             return 'Invalid file type. Only .xlsx files are allowed.'
-    return render_template('upload.html')
+    return render_template('upload2.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
