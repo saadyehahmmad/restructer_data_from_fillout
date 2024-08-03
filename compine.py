@@ -238,7 +238,7 @@ def app2():
             file.save(file_path)
             try:
                 processed_file_path = process_excel(file_path)  # This function is from your second app
-                return send_file(processed_file_path, as_attachment=True)
+                return send_file(processed_file, as_attachment=True, download_name='processed_file.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             except Exception as e:
                 return f"An error occurred: {e}"
         else:
