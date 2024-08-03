@@ -22,7 +22,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 # Flask Application 1
-@app.route('/app1', methods=['GET', 'POST'])
+@app.route('/kpi', methods=['GET', 'POST'])
 def app1():
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -224,7 +224,7 @@ def restructure_excel(file_path):
 
 
 # Flask Application 2
-@app.route('/app2', methods=['GET', 'POST'])
+@app.route('/tasks', methods=['GET', 'POST'])
 def app2():
     if request.method == 'POST':
         if 'file' not in request.files:
