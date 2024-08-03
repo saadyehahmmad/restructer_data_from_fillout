@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رفع ملف جديد</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+        }
+        h1, h2 {
+            margin: 0 0 20px 0;
+        }
+        h2 strong {
+            color: red;
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 50px;
+            width: 100%;
+            font-size: 20px;
+            color: #333;
+            transition: background-color 0.3s ease;
+        }
+        .upload-area.dragging {
+            background-color: #e0f7fa;
+        }
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        .upload-area label {
+            cursor: pointer;
+        }
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 15px 30px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>رفع ملف جديد</h1>
+        <h2>تأكد من أن صيغة الجدول هي <strong>.xlsx</strong> قبل الرفع.</h2>
+        <form id="upload-form" method="post" enctype="multipart/form-data">
+            <div class="upload-area" id="upload-area">
+                <label for="file-input">اسحب الملف هنا أو اضغط للرفع</label>
+                <input type="file" name="file" id="file-input" accept=".xlsx">
+            </div>
+            <button type="submit">تحميل</button>
+        </form>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+
+        // Drag over event
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+
+        // Drag leave event
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragging');
+        });
+
+        // Drop event
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            fileInput.files = e.dataTransfer.files; // Transfer the files to the input element
+        });
+
+        // Click to open file dialog
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Display file name when selected
+        fileInput.addEventListener('change', () => {
+            const label = uploadArea.querySelector('label');
+            label.textContent = fileInput.files.length ? fileInput.files[0].name : 'اسحب الملف هنا أو اضغط للرفع';
+        });
+    </script>
+</body>
+</html>
