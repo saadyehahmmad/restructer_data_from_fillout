@@ -8,61 +8,96 @@
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
+            overflow: hidden;
+            position: relative;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .dark-theme {
+            background-color: #121212;
+            color: #e0e0e0;
         }
         .container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 90%;
             max-width: 500px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: 90%;
+            padding: 20px;
+            border-radius: 12px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
-        .container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-        }
-        h1 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        h2 {
-            font-size: 16px;
-            color: #777;
-            margin-bottom: 40px;
-        }
-        h2 strong {
-            color: #e63946;
+        .dark-theme .container {
+            background-color: #1f1f1f;
         }
         .upload-area {
-            border: 2px dashed #007bff;
-            border-radius: 12px;
-            padding: 50px;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            font-size: 18px;
+            height: 100%;
+            border: 2px dashed #007bff;
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 24px;
             color: #555;
-            background-color: #f8f9fa;
+            background-color: rgba(248, 249, 250, 0.95);
             cursor: pointer;
             transition: background-color 0.3s ease, border-color 0.3s ease;
+            display: none; /* Initially hidden */
+            z-index: 10;
+        }
+        .dark-theme .upload-area {
+            background-color: rgba(18, 18, 18, 0.95);
+            color: #e0e0e0;
+            border-color: #bb86fc;
         }
         .upload-area.dragging {
-            background-color: #e0f7fa;
-            border-color: #0056b3;
+            background-color: #1f1f1f;
         }
         .upload-area input[type="file"] {
             display: none;
         }
         .upload-area label {
             display: block;
-            font-size: 18px;
             cursor: pointer;
+            pointer-events: none; /* Prevents label from intercepting pointer events */
+        }
+        .status-message {
+            font-size: 18px;
+            margin: 10px 0;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .status-message.show {
+            opacity: 1;
+        }
+        .file-name {
+            font-size: 16px;
+            text-align: center;
+            margin: 5px 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .file-name.show {
+            opacity: 1;
+        }
+        .info {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .dark-theme .info {
+            color: #bbb;
         }
         button[type="submit"] {
             background-color: #007bff;
@@ -72,51 +107,88 @@
             cursor: pointer;
             padding: 15px 30px;
             font-size: 16px;
-            transition: background-color 0.3s ease, transform 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.3s ease, opacity 0.5s ease;
             margin-top: 30px;
             width: 100%;
+            max-width: 500px;
+            opacity: 0;
         }
         button[type="submit"]:hover {
             background-color: #0056b3;
             transform: translateY(-2px);
+        }
+        button[type="submit"].show {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>رفع ملف جديد</h1>
-        <h2>تأكد من أن صيغة الجدول هي <strong>.xlsx</strong> قبل الرفع.</h2>
-        <form id="upload-form" method="post" enctype="multipart/form-data">
-            <div class="upload-area" id="upload-area">
-                <label for="file-input">اسحب الملف هنا أو اضغط للرفع</label>
-                <input type="file" name="file" id="file-input" accept=".xlsx">
-            </div>
-            <button type="submit">تحميل</button>
-        </form>
+        <p class="info">يرجى رفع المستندات المطلوبة للموافقة عليها. تأكد من أن صيغة الملف هي <strong>.xlsx</strong>.</p>
+        <div class="status-message" id="status-message">الرجاء سحب الملف لرفعه</div>
+        <div class="file-name" id="file-name"></div>
+        <button type="submit" id="upload-button" disabled>تحميل</button>
     </div>
+    <form id="upload-form" method="post" enctype="multipart/form-data">
+        <div class="upload-area" id="upload-area">
+            <label for="file-input">اسحب الملف هنا أو اضغط للرفع</label>
+            <input type="file" name="file" id="file-input" accept=".xlsx">
+        </div>
+    </form>
 
     <script>
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('file-input');
+        const statusMessage = document.getElementById('status-message');
+        const fileNameDisplay = document.getElementById('file-name');
+        const uploadButton = document.getElementById('upload-button');
+        const body = document.body;
 
-        // Drag over event
-        uploadArea.addEventListener('dragover', (e) => {
+        // Show the upload area and switch to dark theme when dragging starts
+        document.addEventListener('dragenter', (e) => {
             e.preventDefault();
-            uploadArea.classList.add('dragging');
+            uploadArea.style.display = 'flex';
+            body.classList.add('dark-theme');
+            setTimeout(() => uploadArea.classList.add('dragging'), 0);
+            setTimeout(() => statusMessage.textContent = 'يمكنك إفلات الملف الآن...', 300);
         });
 
-        // Drag leave event
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragging');
+        // Hide the upload area and switch back to light theme when dragging leaves the window or drop is completed
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            const isOutside = e.clientX === 0 && e.clientY === 0; // Detect if the mouse has left the window
+            if (isOutside) {
+                uploadArea.style.display = 'none';
+                body.classList.remove('dark-theme');
+                statusMessage.textContent = 'الرجاء سحب الملف لرفعه';
+                fileNameDisplay.classList.remove('show');
+                statusMessage.classList.remove('show');
+            }
         });
 
         // Drop event
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadArea.classList.remove('dragging');
+            uploadArea.style.display = 'none'; // Hide after dropping
+            body.classList.remove('dark-theme');
             fileInput.files = e.dataTransfer.files; // Transfer the files to the input element
-            const label = uploadArea.querySelector('label');
-            label.textContent = fileInput.files.length ? fileInput.files[0].name : 'اسحب الملف هنا أو اضغط للرفع';
+            const fileName = fileInput.files.length ? fileInput.files[0].name : '';
+            fileNameDisplay.textContent = `اسم الملف: ${fileName}`;
+            statusMessage.textContent = 'جاري المعالجة...';
+            fileNameDisplay.classList.add('show');
+            statusMessage.classList.add('show');
+
+            // Simulate processing delay
+            setTimeout(() => {
+                statusMessage.textContent = 'جاهز للتحميل!';
+                uploadButton.disabled = false;
+                uploadButton.classList.add('show');
+            }, 1000); // Simulate processing time
+
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 2000); // Hide "جاري المعالجة..." after processing
         });
 
         // Click to open file dialog
@@ -126,8 +198,27 @@
 
         // Display file name when selected
         fileInput.addEventListener('change', () => {
-            const label = uploadArea.querySelector('label');
-            label.textContent = fileInput.files.length ? fileInput.files[0].name : 'اسحب الملف هنا أو اضغط للرفع';
+            const fileName = fileInput.files.length ? fileInput.files[0].name : '';
+            fileNameDisplay.textContent = `اسم الملف: ${fileName}`;
+            statusMessage.textContent = 'جاري المعالجة...';
+            fileNameDisplay.classList.add('show');
+            statusMessage.classList.add('show');
+
+            // Simulate processing delay
+            setTimeout(() => {
+                statusMessage.textContent = 'جاهز للتحميل!';
+                uploadButton.disabled = false;
+                uploadButton.classList.add('show');
+            }, 1000);
+
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 2000);
+        });
+
+        // Prevent default dragover behavior
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
         });
     </script>
 </body>
