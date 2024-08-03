@@ -225,27 +225,6 @@ def restructure_excel(file_path):
 
 
 # Flask Application 2
-@app.route('/tasks', methods=['GET', 'POST'])
-def app2():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return 'No file part'
-        file = request.files['file']
-        if file.filename == '':
-            return 'No selected file'
-        if file and allowed_file(file.filename):
-            file_path = os.path.join(app.config['UPLOAD_FOLDER_2'], secure_filename(file.filename))
-            file.save(file_path)
-            try:
-                processed_file_path = process_excel(file_path)  # This function is from your second app
-                return send_file(processed_file, as_attachment=True, download_name='processed_file.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            except Exception as e:
-                return f"An error occurred: {e}"
-        else:
-            return 'Invalid file type. Only .xlsx files are allowed.'
-    return render_template('upload2.html')  # Template for the second application
-
-
 def process_excel(file_path):
     try:
         wb = openpyxl.load_workbook(file_path)
@@ -307,6 +286,26 @@ def process_excel(file_path):
 
     except Exception as e:
         return f"An error occurred: {e}"
+
+@app.route('/tasks', methods=['GET', 'POST'])
+def app2():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return 'No file part'
+        file = request.files['file']
+        if file.filename == '':
+            return 'No selected file'
+        if file and allowed_file(file.filename):
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+            file.save(file_path)
+            try:
+                processed_file = process_excel(file_path)
+                return send_file(processed_file, as_attachment=True, download_name='processed_file.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            except Exception as e:
+                return f"An error occurred: {e}"
+        else:
+            return 'Invalid file type. Only .xlsx files are allowed.'
+    return render_template('upload.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
